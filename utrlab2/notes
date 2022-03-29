@@ -1,0 +1,8 @@
+istovjetna stnaja -> prihvaćaju isti skup nizova
+relacija istovjetnosti je tranzitivna
+najprije se istovjetna stanja označe zajedničkim imenom
+ispitivanje istovjetnosti svodi se na 2 stvari
+1) uvjet podudarnosti - stanja p i q moraju biti jednake prihvatljivosti
+2) za bilo koji ulazni znak a mora vrijediti da su stanja delta(p,a) i delta(q,a) jednake prihvatljivosti
+
+i sad onaj algoritam je samo algoritam za odredivanje istovjetnih stanja
