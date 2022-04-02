@@ -10,6 +10,7 @@ class DKA:
         self.transition_function_dict = transition_function
         self.marked_pairs, self.unmarked_pairs, self.pairs = set(), set(), set()
         self.pair_lists = dict()
+        self.merged_states = []
 
     def transition(self, state, symbol):
         return self.transition_function_dict[tuple([state, symbol])]
@@ -28,6 +29,9 @@ class DKA:
 
         for unreachable_state in self.states.difference(reachable_states):
             self.states.remove(unreachable_state)
+            for key in self.transition_function_dict.copy().keys():
+                if unreachable_state in key:
+                    self.transition_function_dict.pop(key)
 
     def fill_dict(self):
         for pair in self.pairs:
@@ -57,13 +61,12 @@ class DKA:
             returning_set = returning_set.union(self.get_new_markings_from_list(pair_to_check))
         return returning_set
 
-    # TODO ova logika sa unmarked se mozda trga, ovaj dio "Za bilo koji par razlicitih .."
     def marking_pairs(self):
         self.mark_pairs_initial()
         for pair in self.unmarked_pairs.copy():
             for symbol in self.symbols:
                 if tuple(sorted([self.transition(pair[0], symbol),
-                                 self.transition(pair[1], symbol)])) in self.marked_pairs:
+                                 self.transition(pair[1], symbol)])) in self.marked_pairs and pair not in self.marked_pairs:
                     added_from_list = self.get_new_markings_from_list(pair)
                     self.marked_pairs = self.marked_pairs.union(added_from_list)
                 else:
@@ -73,18 +76,40 @@ class DKA:
                             tuple(sorted([self.transition(pair[0], symb2), self.transition(pair[1], symb2)]))].add(pair)
 
         states_out = self.states
-        for state in self.pairs.difference(self.marked_pairs):
+        self.merged_states = self.pairs.difference(self.marked_pairs)
+        for state in self.merged_states:
             if state[1] in states_out:
                 states_out.remove(state[1])
+
+        for state in self.merged_states:
+            if self.start_state in state:
+                self.start_state = state[0]
 
     def get_states(self):
         strprnt = ""
         for state in self.states: strprnt += f"{state},"
         return strprnt[:-1]
 
-    # def get_output(self):
-    #     output =
-    #     output.append()
+    def print_output(self):
+        print(self.get_states())
+        out = ""
+        for symbol in self.symbols:
+            out += symbol + ","
+        print(out[:-1])
+        out = ""
+        for state in self.accept_states.intersection(self.states):
+            out += state + ","
+        print(out[:-1])
+        print(self.start_state)
+        transition_final = ""
+        for elem in self.transition_function_dict.items():
+            transition_final += elem[0][0] + "," + elem[0][1] + "->" + elem[1] + " "
+        transition_final.strip()
+        for swap in self.merged_states:
+            transition_final = transition_final.replace(swap[1], swap[0])
+        transition_final = sorted(list(set(transition_final.strip().split(" "))))
+        for trans in transition_final:
+            print(trans)
 
 
 def main():
@@ -101,7 +126,7 @@ def main():
     dka.discard_unreachable()
     dka.mark_pairs_initial()
     dka.marking_pairs()
-    print(dka.get_states())
+    dka.print_output()
 
 
 if __name__ == '__main__':
