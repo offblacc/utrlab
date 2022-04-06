@@ -2,15 +2,27 @@ import sys
 
 
 class DKA:
-    def __init__(self, states, symbols, accept_states, start_state, transition_function):
-        self.states = states
-        self.symbols = symbols
-        self.accept_states = accept_states
-        self.start_state = start_state
-        self.transition_function_dict = transition_function
-        self.marked_pairs, self.unmarked_pairs, self.pairs = set(), set(), set()
-        self.pair_lists = dict()
-        self.merged_states = []
+    def __init__(self, dka_definition):
+        self.states = dka_definition[0]
+        self.symbols = dka_definition[1]
+        self.accept_states = dka_definition[2]
+        self.start_state = dka_definition[3]
+        self.transition_function_dict = dka_definition[4]
+        self.marked_pairs, self.pairs, self.pair_lists, self.merged_states = set(), set(), dict(), []
+
+    # parses input, returns dka_parameters list
+    @staticmethod
+    def parse_input():
+        dka_definition = []
+        for _ in range(3):
+            dka_definition.append(set(sys.stdin.readline().strip().split(",")))
+        dka_definition.append(sys.stdin.readline().strip())
+        dka_definition.append(dict([(
+            tuple((x.split("->")[0]).split(",")),
+            x.split("->")[1].strip())
+            for x in sys.stdin.readlines()]
+        ))  # key is tuple (state, symbol), value is string
+        return dka_definition
 
     def transition(self, state, symbol):
         return self.transition_function_dict[tuple([state, symbol])]
@@ -37,21 +49,19 @@ class DKA:
         for pair in self.pairs:
             self.pair_lists.update({pair: set()})
 
-    def update_all_pairs(self):
-        self.pairs = self.marked_pairs.union(self.unmarked_pairs)
-        for pair in self.pairs:
-            self.pair_lists.update({pair: []})
-        self.fill_dict()
-
-    def mark_pairs_initial(self):
+    def mark_trivially_nonequivalent(self):
+        unmarked_pairs = set()
         for st1 in self.states:
             for st2 in self.states:
                 if st1 == st2: continue  # only different states pass this statement
                 if (st1 in self.accept_states) != (st2 in self.accept_states):  # different acceptedness
                     self.marked_pairs.add(tuple(sorted([st1, st2])))
                 else:
-                    self.unmarked_pairs.add(tuple(sorted([st1, st2])))
-        self.update_all_pairs()
+                    unmarked_pairs.add(tuple(sorted([st1, st2])))
+        self.pairs = self.marked_pairs.union(unmarked_pairs)
+        for pair in self.pairs:
+            self.pair_lists.update({pair: []})
+        self.fill_dict()
 
     # also adds the state whose list we're checking
     def get_new_markings_from_list(self, tuple_states):
@@ -61,12 +71,14 @@ class DKA:
             returning_set = returning_set.union(self.get_new_markings_from_list(pair_to_check))
         return returning_set
 
-    def marking_pairs(self):
-        self.mark_pairs_initial()
-        for pair in self.unmarked_pairs.copy():
+    def minimize(self):
+        self.discard_unreachable()
+        self.mark_trivially_nonequivalent()
+        for pair in self.pairs.difference(self.marked_pairs):
             for symbol in self.symbols:
-                if tuple(sorted([self.transition(pair[0], symbol),
-                                 self.transition(pair[1], symbol)])) in self.marked_pairs and pair not in self.marked_pairs:
+                delta_pair = tuple(sorted([self.transition(pair[0], symbol), self.transition(pair[1], symbol)]))
+                if delta_pair not in self.marked_pairs: continue
+                if pair not in self.marked_pairs:
                     added_from_list = self.get_new_markings_from_list(pair)
                     self.marked_pairs = self.marked_pairs.union(added_from_list)
                 else:
@@ -74,12 +86,10 @@ class DKA:
                         if self.transition(pair[0], symb2) == self.transition(pair[1], symb2): continue
                         self.pair_lists[
                             tuple(sorted([self.transition(pair[0], symb2), self.transition(pair[1], symb2)]))].add(pair)
-
-        states_out = self.states
         self.merged_states = self.pairs.difference(self.marked_pairs)
         for state in self.merged_states:
-            if state[1] in states_out:
-                states_out.remove(state[1])
+            if state[1] in self.states.copy():
+                self.states.remove(state[1])
 
         for state in self.merged_states:
             if self.start_state in state:
@@ -87,17 +97,17 @@ class DKA:
 
     def get_states(self):
         strprnt = ""
-        for state in self.states: strprnt += f"{state},"
+        for state in sorted(list(self.states)): strprnt += f"{state},"
         return strprnt[:-1]
 
-    def print_output(self):
+    def print_dka(self):
         print(self.get_states())
         out = ""
-        for symbol in self.symbols:
+        for symbol in sorted(list(self.symbols)):
             out += symbol + ","
         print(out[:-1])
         out = ""
-        for state in self.accept_states.intersection(self.states):
+        for state in sorted(list(self.accept_states.intersection(self.states))):
             out += state + ","
         print(out[:-1])
         print(self.start_state)
@@ -113,20 +123,9 @@ class DKA:
 
 
 def main():
-    states = set(sys.stdin.readline().strip().split(","))
-    symbols = set(sys.stdin.readline().strip().split(","))
-    accept_states = set(sys.stdin.readline().strip().split(","))
-    start_state = sys.stdin.readline().strip()
-    transition_function = dict([(
-        tuple((x.split("->")[0]).split(",")),
-        x.split("->")[1].strip())
-        for x in sys.stdin.readlines()]
-    )
-    dka = DKA(states, symbols, accept_states, start_state, transition_function)
-    dka.discard_unreachable()
-    dka.mark_pairs_initial()
-    dka.marking_pairs()
-    dka.print_output()
+    dka = DKA(DKA.parse_input())
+    dka.minimize()
+    dka.print_dka()
 
 
 if __name__ == '__main__':
