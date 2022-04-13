@@ -8,7 +8,7 @@ do
     # generiraj ime direktorija s vodecom nulom
     dir=$(printf "%0*d\n" 2 $i)
     # pokreni program i provjeri izlaz
-    res=`pypy3 MinDka.py < lab2.tests/test$dir/t.ul | diff lab2.tests/test$dir/t.iz -`
+    res=`python3 MinDka.py < lab2.tests/test$dir/t.ul | diff lab2.tests/test$dir/t.iz -`
     if [ "$res" != "" ]
     then
         # izlazi ne odgovaraju
