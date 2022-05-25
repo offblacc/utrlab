@@ -3,6 +3,8 @@ red=`tput setaf 1`
 green=`tput setaf 2`
 reset=`tput sgr0`
 
+start_time=$(date +%s.%3N)
+
 for i in {1..25} # broj ispitnih primjera
 do
     # generiraj ime direktorija s vodecom nulom
@@ -19,3 +21,7 @@ do
         echo "Test $dir ${green}PASS${reset}"
     fi
 done
+
+end_time=$(date +%s.%3N)
+elapsed=$(echo "scale=3; $end_time - $start_time" | bc)
+echo "elapsed time: $elapsed s"

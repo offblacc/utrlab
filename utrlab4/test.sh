@@ -7,6 +7,8 @@ set -e
 gcc parser.c -o parser.out
 set +e
 
+start_time=$(date +%s.%3N)
+
 for i in {1..20} # broj ispitnih primjera
 do
     # generiraj ime direktorija s vodecom nulom
@@ -23,3 +25,7 @@ do
         echo "Test $dir ${green}PASS${reset}"
     fi
 done
+
+end_time=$(date +%s.%3N)
+elapsed=$(echo "scale=3; $end_time - $start_time" | bc)
+echo "elapsed time: $elapsed s"
