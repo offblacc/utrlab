@@ -13,17 +13,9 @@ char arr[MAX_IN] = {'\0'};
 
 // ------------- main --------------
 int main() {
-    if (!fgets(arr, MAX_IN, stdin)) {
-        printf("Input reading error\n");
-        return 1;
-    }
-
-    while (arr[len] != '\0' && arr[len] != '\n')
-        len++;
-
-    if (arr[len] == '\n')
-        arr[len] = '\0';
-
+    if (!fgets(arr, MAX_IN, stdin)) return 1;
+    while (arr[len] != '\0' && arr[len] != '\n') len++;
+    if (arr[len] == '\n') arr[len] = '\0';
     S();
     printf(arr[pos] == '\0' ? "\nDA\n" : "\nNE\n");
     return 0;
